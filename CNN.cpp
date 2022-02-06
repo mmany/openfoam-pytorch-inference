@@ -1,6 +1,10 @@
 #include "CNN.h"
 #include "ATen/Functions.h"
+#include "fvBoundaryMesh.H"
+#include "labelList.H"
 #include "torch/nn/modules/conv.h"
+#include "vectorField.H"
+#include "volFieldsFwd.H"
 //#include "UList.H"
 //#include <iostream>
 //#include "volFieldsFwd.H"
@@ -272,7 +276,7 @@ Foam::volScalarField CNN::convertToFoamField(const torch::Tensor &t, const std::
 	return field;
 }
 
-void CNN::printFoamField(Foam::volVectorField vectorField){
+void CNN::printFoamField(const Foam::volVectorField& vectorField){
 	forAll(vectorField.mesh().C(), celli){
 		std::cout << vectorField.name() << " Data : ";
 		std::cout << vectorField.mesh().C()[celli].x() << ", " << vectorField.mesh().C()[celli].y() << ", " << vectorField.mesh().C()[celli].z();
@@ -282,7 +286,7 @@ void CNN::printFoamField(Foam::volVectorField vectorField){
 	std::cout << std::endl;
 }
 
-void CNN::printFoamField(Foam::volScalarField scalarField){
+void CNN::printFoamField(const Foam::volScalarField& scalarField){
 	forAll(scalarField.mesh().C(), celli){
 		std::cout << scalarField.name() << " Data : ";
 		std::cout << scalarField.mesh().C()[celli].x() << ", " << scalarField.mesh().C()[celli].y() << ", " << scalarField.mesh().C()[celli].z();
@@ -397,7 +401,142 @@ torch::Tensor CNN::set_wall_to_zero(const torch::Tensor &input){
 	//auto output_a = output.accessor<float, 2>();
 	for(int j = 0;j<output.sizes()[3];j++){
 		output[0][0][0][j]=0.0;
-		output[0][0][1][j]=0.0;
+		output[0][0][-1][j]=0.0;
 	}
 	return output;
+}
+
+void CNN::printFoamFieldNodes(const Foam::volVectorField& vectorField){
+	std::cout << "Printing Node data of Field" << std::endl;
+	const Foam::labelListList& points = vectorField.mesh().cellPoints();
+	forAll(points, celli){
+		std::cout << vectorField.name() << " Data : ";
+		// std::cout << points[celli].begin << ", " << points[celli].y() << ", " << points[celli].z();
+		forAll(points[celli],i){
+			std::cout << i << ":" << points[celli][i] << ", ";
+		}
+		// std::cout << points[celli] << std::endl;
+		// std::cout << " Value : " << vectorField[celli].x() << ", " << vectorField[celli].y() << ", " << vectorField[celli].z();
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+
+	forAll(points, celli){
+		std::cout << vectorField.name() << " Data : ";
+		// std::cout << points[celli].begin << ", " << points[celli].y() << ", " << points[celli].z();
+		forAll(points[celli],i){
+			int current_node = points[celli][i];
+			std::cout << i << ":" << current_node << "_value0:" << vectorField.mesh().points()[current_node].component(0);
+			std::cout << "_value1:" << vectorField.mesh().points()[current_node].component(1);
+			std::cout << "_value2:" << vectorField.mesh().points()[current_node].component(2);
+		}
+		// std::cout << points[celli] << std::endl;
+		// std::cout << " Value : " << vectorField[celli].x() << ", " << vectorField[celli].y() << ", " << vectorField[celli].z();
+		std::cout << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+void CNN::printFoamFieldNodes(const Foam::volScalarField& scalarField){
+	std::cout << "Support for scalarFields is to be implemented" << std::endl;
+	std::cout << std::endl;
+}
+
+void CNN::printInletNodes(const Foam::volScalarField& scalarField){
+	std::cout << "Printing Inlet nodes" << std::endl;
+	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
+	// std::cout << patchID << endl;
+	// auto boundary = scalarField.mesh().boundaryMesh()["inlet"];
+	auto face_centres_boundary = scalarField.mesh().Cf().boundaryField()[patchID];
+	forAll(face_centres_boundary, facei){
+		// std::cout << "value: " << face_centres_boundary[facei] << ", x:"<< face_centres_boundary[facei].x() << ", y:"<< face_centres_boundary[facei].y() <<", z:"<< face_centres_boundary[facei].z() << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+void CNN::printInletNodesBis(const Foam::volScalarField& scalarField){
+	std::cout << "Printing Inlet nodes" << std::endl;
+	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
+	auto points_ = scalarField.mesh().points();
+
+	forAll (scalarField.mesh().boundary()[patchID],facei) 
+	{
+		const label& faceID = scalarField.mesh().boundaryMesh()[patchID].start() + facei;
+		forAll (scalarField.mesh().faces()[faceID], nodei)
+		{
+			const label& nodeID = scalarField.mesh().faces()[faceID][nodei];
+			std::cout << points_[nodeID].X << std::endl;
+		}
+	}
+	// std::cout << patchID << endl;
+	// auto boundary = scalarField.mesh().boundaryMesh()["inlet"];
+	auto face_centres_boundary = scalarField.mesh().Cf().boundaryField()[patchID];
+	forAll(face_centres_boundary, facei){
+		// std::cout << "value: " << face_centres_boundary[facei] << ", x:"<< face_centres_boundary[facei].x() << ", y:"<< face_centres_boundary[facei].y() <<", z:"<< face_centres_boundary[facei].z() << std::endl;
+	}
+	std::cout << std::endl;
+}
+
+torch::Tensor CNN::loadTensorFromContainer(const std::string container_filepath, const std::string key){
+	std::cout << "Note : to load Tensors from the Pytorch Python API, they need to be saved under a container with corresponding dictionnary keys. See sample code to save Pytorch Python Tensors as .pt containers."<< std::endl;
+	std::cout << "Loading Container located : " << container_filepath << std::endl;
+	std::cout << "Loading Key from Container located : " << key << std::endl;
+	torch::jit::script::Module container = torch::jit::load(container_filepath);
+	// Load values by name
+	torch::Tensor loaded_tens = container.attr(key).toTensor();
+	return loaded_tens;
+}
+
+void CNN::updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorField& U0, Foam::volVectorField& U1){
+	int it = 0;
+	auto t_a = t.accessor<float,4>();
+	forAll(U0.mesh().C(), celli){
+		int i = it / 250;
+		int j = it % 250;
+		std::cout << " Changed : x:"<<U0[celli].component(0)<<", y:"<<U0[celli].component(1)<<", z:"<<U0[celli].component(2)<<std::endl;
+		U0[celli].component(0) = t_a[0][0][i][j];
+		U0[celli].component(2) = t_a[0][1][i][j];
+		U1[celli].component(0) = t_a[0][2][i][j];
+		U1[celli].component(2) = t_a[0][3][i][j];
+		it++;
+	}
+}
+//void CNN::set_inlet_nut(Foam::volScalarField& field, float value){
+//	Foam::label patchID = field.mesh().boundaryMesh().findPatchID("inlet");
+//	const fvPatch& boundaryPatch = field.mesh().boundary()[patchID];
+//
+//	forAll(boundaryPatch, faceI)
+//	{
+//		field[faceI] =  value;
+//	}
+//}
+
+void CNN::set_inlet_nut(Foam::volVectorField& field, float value){
+	Foam::label patchID = field.mesh().boundaryMesh().findPatchID("inlet");
+	const fvPatch& boundaryPatch = field.mesh().boundary()[patchID];
+
+	forAll(boundaryPatch, faceI)
+	{
+		field[faceI] =  vector(value,value,value);
+	}
+}
+
+void CNN::set_inlet_nut(Foam::volScalarField& field, float value){
+	label patchI = field.mesh().boundaryMesh().findPatchID("inlet");
+	std::cout << "found \"inlet\" patch ID : "<< patchI << std::endl;
+
+	//forAll(field.mesh().boundaryMesh()[patchI].faceCentres(), faceI)
+	//{
+	//	scalar x = field.mesh().boundaryMesh()[patchI].faceCentres()[faceI].x();
+	//	scalar y = field.mesh().boundaryMesh()[patchI].faceCentres()[faceI].y();
+	//	scalar z = field.mesh().boundaryMesh()[patchI].faceCentres()[faceI].z();
+	//	std::cout<<faceI<<" "<<x<<" "<<y<<" "<<z<<" "<<endl;
+	//}
+
+	forAll(field.boundaryFieldRef()[patchI], faceIt){
+		std::cout << field.boundaryFieldRef()[patchI][faceIt] << std::endl;
+		field.boundaryFieldRef()[patchI][faceIt] = value;
+
+		std::cout << field.boundaryFieldRef()[patchI][faceIt] << std::endl;
+	}
 }
