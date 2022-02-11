@@ -49,7 +49,9 @@ class CNN {
 		//For OF field conversion to torch::Tensor
 		torch::Tensor convertToTensor_test(Foam::volVectorField& U0, Foam::volVectorField& U1);
 		torch::Tensor convertToTensor(Foam::volVectorField& U0, Foam::volVectorField& U1);
+		torch::Tensor convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVectorField& U1);
 		void updateFoamFieldChannelFlow(torch::Tensor& t, Foam::volScalarField& nut0, Foam::volScalarField& nut1);
+		void updateFoamFieldChannelFlow_bfs(torch::Tensor& t, Foam::volScalarField& nut0, Foam::volScalarField& nut1);
 		void updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorField& U0, Foam::volVectorField& U1);
 		Foam::volScalarField convertToFoamField(const torch::Tensor &t, const std::string& field_name, const Foam::Time& runTime, const Foam::fvMesh& mesh, int uqNode);
 

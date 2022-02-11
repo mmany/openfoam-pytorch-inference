@@ -215,7 +215,7 @@ torch::Tensor CNN::convertToTensor_test(Foam::volVectorField& U0, Foam::volVecto
 torch::Tensor CNN::convertToTensor(Foam::volVectorField& U0, Foam::volVectorField& U1){
 	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
 
-	torch::Tensor output = torch::zeros({1,4,100,250});
+	torch::Tensor output = torch::zeros({1,4,100,50});
 	//auto ouptut_a = output.accessor<double, 4>();
 	int it = 0;
 	forAll(U0.mesh().C(), celli){
@@ -227,8 +227,8 @@ torch::Tensor CNN::convertToTensor(Foam::volVectorField& U0, Foam::volVectorFiel
 		//std::cout << " U1 Data : ";
 		//std::cout << U1.mesh().C()[celli].x() << ", " << U1.mesh().C()[celli].y() << ", " << U1.mesh().C()[celli].z();
 		//std::cout << " Value : " << U1[celli].x() << ", " << U1[celli].y() << ", " << U1[celli].z();
-		int i = it / 250;
-		int j = it % 250;
+		int i = it / 50;
+		int j = it % 50;
 		//std::cout <<" i = " << i << ", j = " <<j;
 		//std::cout << std::endl;
 		output[0][0][i][j] = U0[celli].x(); 
@@ -240,14 +240,113 @@ torch::Tensor CNN::convertToTensor(Foam::volVectorField& U0, Foam::volVectorFiel
 	return output;
 }
 
+
 void CNN::updateFoamFieldChannelFlow(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
 	int it = 0;
 	auto t_a = t.accessor<float,4>();
 	forAll(nut0.mesh().C(), celli){
-		int i = it / 250;
-		int j = it % 250;
+		int i = it / 50;
+		int j = it % 50;
 		nut0[celli] = t_a[0][0][i][j];
 		nut1[celli] = t_a[0][1][i][j];
+		it++;
+	}
+}
+
+torch::Tensor CNN::convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVectorField& U1){
+	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
+
+	//Number of cells definitions
+	//Step height
+	int nsh=33;
+	//domain height-step height
+	int nh=67;
+	//Step length
+	int nsl=6;
+	// domain length - step length
+	int nl=44;
+
+	int height_disc=100;
+	int width_disc=50;
+
+	torch::Tensor output = torch::zeros({1,4,height_disc,width_disc});
+	int it = 0;
+	forAll(U0.mesh().C(), celli){
+		if(it<nsl*nh){
+			int i = it / nsl;
+			int j = it % nsl;
+			output[0][0][nsh+i][j] = U0[celli].x(); 
+			output[0][1][nsh+i][j] = U0[celli].z(); 
+			output[0][2][nsh+i][j] = U1[celli].x(); 
+			output[0][3][nsh+i][j] = U1[celli].z(); 
+		}
+		else if (it<(nsl*nh+nsh*nsl)){
+			int i = (it-nh*nsl) / nsl;
+			int j = (it-nh*nsl) % nsl;
+			output[0][0][i][j] = U0[celli].x(); 
+			output[0][1][i][j] = U0[celli].z(); 
+			output[0][2][i][j] = U1[celli].x(); 
+			output[0][3][i][j] = U1[celli].z(); 
+		}
+		else if (it<(nsl*nh+nsh*nsl+nh*nl)){
+			int i = (it-(nh*nsl+nsh*nsl)) / nl;
+			int j = (it-(nh*nsl+nsh*nsl)) % nl;
+			output[0][0][i+nsh][j+nsl] = U0[celli].x(); 
+			output[0][1][i+nsh][j+nsl] = U0[celli].z(); 
+			output[0][2][i+nsh][j+nsl] = U1[celli].x(); 
+			output[0][3][i+nsh][j+nsl] = U1[celli].z(); 
+		}
+		else if (it<(nsl*nh+nsh*nsl+nh*nl+nsh*nl)){
+			int i = (it-(nh*nsl+nsh*nsl+nh*nl)) / nl;
+			int j = (it-(nh*nsl+nsh*nsl+nh*nl)) % nl;
+			output[0][0][i][j+nsl] = U0[celli].x(); 
+			output[0][1][i][j+nsl] = U0[celli].z(); 
+			output[0][2][i][j+nsl] = U1[celli].x(); 
+			output[0][3][i][j+nsl] = U1[celli].z(); 
+		}
+		it++;
+	}
+	return output;
+}
+
+void CNN::updateFoamFieldChannelFlow_bfs(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
+	int it = 0;
+	//Number of cells definitions
+	//Step height
+	int nsh=33;
+	//domain height-step height
+	int nh=67;
+	//Step length
+	int nsl=6;
+	// domain length - step length
+	int nl=44;
+
+	auto t_a = t.accessor<float,4>();
+	forAll(nut0.mesh().C(), celli){
+		if(it<nsl*nh){
+			int i = it / nsl;
+			int j = it % nsl;
+			nut0[celli] = t_a[0][0][nsh+i][j] ; 
+			nut1[celli] = t_a[0][1][nsh+i][j] ; 
+		}
+		else if (it<(nsl*nh+nsh*nsl)){
+			int i = (it-nh*nsl) / nsl;
+			int j = (it-nh*nsl) % nsl;
+			nut0[celli] = t_a[0][0][i][j] ; 
+			nut1[celli] = t_a[0][1][i][j] ; 
+		}
+		else if (it<(nsl*nh+nsh*nsl+nh*nl)){
+			int i = (it-(nh*nsl+nsh*nsl)) / nl;
+			int j = (it-(nh*nsl+nsh*nsl)) % nl;
+			nut0[celli] = t_a[0][0][i+nsh][j+nsl] ; 
+			nut1[celli] = t_a[0][1][i+nsh][j+nsl] ; 
+		}
+		else if (it<(nsl*nh+nsh*nsl+nh*nl+nsh*nl)){
+			int i = (it-(nh*nsl+nsh*nsl+nh*nl)) / nl;
+			int j = (it-(nh*nsl+nsh*nsl+nh*nl)) % nl;
+			nut0[celli] = t_a[0][0][i][j+nsl] ; 
+			nut1[celli] = t_a[0][1][i][j+nsl] ; 
+		}
 		it++;
 	}
 }
@@ -269,8 +368,8 @@ Foam::volScalarField CNN::convertToFoamField(const torch::Tensor &t, const std::
 	auto t_a = t.accessor<float, 4>();
 	int it = 0;
 	forAll(field.mesh().C(), celli){
-		int i = it / 250;
-		int j = it % 250;
+		int i = it / 50;
+		int j = it % 50;
 		field[celli] = t_a[0][uqNode][i][j];
 	}
 	return field;
@@ -491,8 +590,8 @@ void CNN::updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorF
 	int it = 0;
 	auto t_a = t.accessor<float,4>();
 	forAll(U0.mesh().C(), celli){
-		int i = it / 250;
-		int j = it % 250;
+		int i = it / 50;
+		int j = it % 50;
 		std::cout << " Changed : x:"<<U0[celli].component(0)<<", y:"<<U0[celli].component(1)<<", z:"<<U0[celli].component(2)<<std::endl;
 		U0[celli].component(0) = t_a[0][0][i][j];
 		U0[celli].component(2) = t_a[0][1][i][j];
