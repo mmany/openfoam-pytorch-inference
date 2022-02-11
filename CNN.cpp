@@ -100,7 +100,7 @@ torch::Tensor CNN::predict(torch::Tensor input, float alpha){
 
 	// Post-processing
 	torch::Tensor standard_output = this->output_normalizer.inverse_transform(normalized_output);
-	standard_output = this->set_wall_to_zero(standard_output);
+	//standard_output = this->set_wall_to_zero(standard_output);
 	//std::cout << "shape of standard_output : " << standard_output.sizes() << std::endl;
 	torch::Tensor output = this->resizeToOriginal(standard_output, std::vector<int64_t> ({original_height, original_width}));
 	//std::cout << "shape of output : " << output.sizes() << std::endl;
