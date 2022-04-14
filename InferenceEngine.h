@@ -3,7 +3,7 @@
 //#include <string>
 //#include <torch/torch.h>
 //#include <torch/script.h>
-#include "Custom_normalizer.h"
+#include "CustomNormalizer.h"
 #include "volFieldsFwd.H"
 #include <vector>
 
@@ -26,11 +26,11 @@
     @date March 2022
     */
 
-class CNN {
+class InferenceEngine {
 
 	torch::jit::script::Module module;
-	Custom_normalizer input_normalizer;
-	Custom_normalizer output_normalizer;
+	CustomNormalizer input_normalizer;
+	CustomNormalizer output_normalizer;
 
 	// For under_relaxation
 	torch::Tensor old_nut = torch::zeros(1);
@@ -42,19 +42,19 @@ class CNN {
 
 
 		// Constructors 
-		/** Default constructor to initialize the CNN object with model only (without normalizers)
+		/** Default constructor to initialize the InferenceEngine object with model only (without normalizers)
 		@param model_path string which contains the path of the model in Torchscript format.
         	*/
-		CNN(std::string model_path);
-		/** Constructor recommended to use to initialize the CNN object with model and normalizers
+		InferenceEngine(std::string model_path);
+		/** Constructor recommended to use to initialize the InferenceEngine object with model and normalizers
 		@param model_path string which contains the path of the model in Torchscript format.
-		@param input_normalizer_path string which contains the absolute path to the input normalizer in JSON format, the normalizers are used to create objects from the Custom_Normalizer class.
-		@param input_normalizer_path string which contains the absolute path to the output normalizer in JSON format (See Custom_Normalizer class).
+		@param input_normalizer_path string which contains the absolute path to the input normalizer in JSON format, the normalizers are used to create objects from the CustomNormalizer class.
+		@param input_normalizer_path string which contains the absolute path to the output normalizer in JSON format (See CustomNormalizer class).
         	*/
-		CNN(std::string model_path, std::string input_normalizer_path, std::string output_normalizer_path);
-		/** Default destructor of the CNN class
+		InferenceEngine(std::string model_path, std::string input_normalizer_path, std::string output_normalizer_path);
+		/** Default destructor of the InferenceEngine class
         	*/
-		~CNN();
+		~InferenceEngine();
 
 
 		// Member functions
@@ -68,7 +68,7 @@ class CNN {
 		@return torch::Tensor
         	*/
 		torch::Tensor predict(torch::Tensor input); // alpha is the under-relaxation factor (1 == no UR ; 0 == no prediction)
-		/** Same function as CNN::predict with the difference that a mask is used as an additional channel 
+		/** Same function as InferenceEngine::predict with the difference that a mask is used as an additional channel 
 		@param input torch::Tensor used as an input for inference, a geometry mask is added (total of 5 channels)
 		@return torch::Tensor
         	*/
@@ -103,7 +103,7 @@ class CNN {
 		torch::Tensor convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVectorField& U1);
 		/** Extrtacts the lengthwise and widthwise \f$u_x, u_y\f$ velocities from the vector fields U0 and U1 and stores them as tensors.
 		 * Adapted for a Backward facing step configuration, dimensions of the mesh have to coded separately.
-		 * The emulated backward facing step geometry is added as a n additional channel using the define_mask() function from the CNN class.
+		 * The emulated backward facing step geometry is added as a n additional channel using the define_mask() function from the InferenceEngine class.
 		 * The produced tensor is of the folloowing shape : [1,5,width_discretizations, mesh length discretizations].
 		 * The 5 channels are ordered in the following manner: U0_x, U0_y, U1_x, U1_y 
 		@param U0 volVectorField, first velocity mode
@@ -177,7 +177,7 @@ class CNN {
 
 
 		//Utility member functions
-		/**  (Not tested yet) Experimental function which is aimed to give information on the max rate of change of the CNN predictions. If such a function is working, adaptive under-relaxation can be performed when the maximum rate of change of the prediction compared to the previous prediction exceeds a certain value. 
+		/**  (Not tested yet) Experimental function which is aimed to give information on the max rate of change of the InferenceEngine predictions. If such a function is working, adaptive under-relaxation can be performed when the maximum rate of change of the prediction compared to the previous prediction exceeds a certain value. 
 		@return a float value
         	*/
 		float get_max_rate_of_change();

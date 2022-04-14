@@ -22,7 +22,7 @@ using json=nlohmann::json;
     @author Maheindrane Many
     @date March 2022
     */
-class Custom_normalizer {
+class CustomNormalizer {
 	std::string load_filepath;/**< attribute used to store filepath of normalizer */	
 	//double mean[4] = {0,0,0,0}; /**< single dimension array used to store the mean values for the normalization process*/
 	//double std[4] = {0,0,0,0};/**< single dimension array used to store the standard deviation values for the normalization process*/
@@ -32,13 +32,13 @@ class Custom_normalizer {
 	/**
 	 * Default constructor, only creates the object, not recommended
 	 */
-		Custom_normalizer();
+		CustomNormalizer();
 	/**
 	 * Recommended constructor. Overload of the default constructor which directly initializes the means and stds with the specified normalizer path.
 	 @param json_filepath path to normalize, stored as a JSON object.
 	 @param deserialize_bool if true, updates the mean and std values
 	 */
-		Custom_normalizer(std::string json_filepath, bool deserialize_bool = true);
+		CustomNormalizer(std::string json_filepath, bool deserialize_bool = true);
 	/**
 	 * Function to perform normalization of every individiual channel of the tensor with the given mean and std. The performed operation is \f$ output[i] = \frac{input[i]-mean[i]}{std[i]}\f$. Returns the normalized tensor.
 	 @param input torch tensor to be normalized

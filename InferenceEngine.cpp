@@ -1,4 +1,4 @@
-#include "CNN.h"
+#include "InferenceEngine.h"
 #include "ATen/Functions.h"
 #include "fvBoundaryMesh.H"
 #include "labelList.H"
@@ -14,12 +14,12 @@
 //#include <vector
 namespace F = torch::nn::functional;
 
-CNN::CNN(std::string model_path){
+InferenceEngine::InferenceEngine(std::string model_path){
 	std::cout << "*************************************************" << std::endl;
-	std::cout << "-------Initializing CNN with given model --------" << std::endl;
+	std::cout << "-------Initializing InferenceEngine with given model --------" << std::endl;
 	std::cout << "*************************************************" << std::endl << std::endl;
 	// ADD EXCEPTIOSN
-	// Loading the CNN model
+	// Loading the InferenceEngine model
 	std::cout << "Loading Torchscript model : "+model_path << std::endl;
 	this->module = torch::jit::load(model_path);
 	this->module.eval();
@@ -27,12 +27,12 @@ CNN::CNN(std::string model_path){
 
 
 }
-CNN::CNN(std::string model_path, std::string input_normalizer_path, std::string output_normalizer_path){
+InferenceEngine::InferenceEngine(std::string model_path, std::string input_normalizer_path, std::string output_normalizer_path){
 	std::cout << "*************************************************" << std::endl;
-	std::cout << "Initializing CNN with given model and normalizers" << std::endl;
+	std::cout << "Initializing InferenceEngine with given model and normalizers" << std::endl;
 	std::cout << "*************************************************" << std::endl << std::endl;
 	// ADD EXCEPTIOSN
-	// Loading the CNN model
+	// Loading the InferenceEngine model
 	std::cout << "Loading Torchscript model : "+model_path << std::endl;
 	this->module = torch::jit::load(model_path);
 	this->module.eval();
@@ -40,18 +40,18 @@ CNN::CNN(std::string model_path, std::string input_normalizer_path, std::string 
 
 	//Load input normalizers
 	std::cout << "Loading input normalizer : "+input_normalizer_path << std::endl;
-	this->input_normalizer = Custom_normalizer(input_normalizer_path);
+	this->input_normalizer = CustomNormalizer(input_normalizer_path);
 	std::cout << "Input normalizer loaded successfully.\n" << std::endl;
 	
 	//Load output nromalizers
 	std::cout << "Loading output normalizer : "+output_normalizer_path << std::endl;
-	this->output_normalizer = Custom_normalizer(output_normalizer_path);
+	this->output_normalizer = CustomNormalizer(output_normalizer_path);
 	std::cout << "Output normlizer loaded successfully." << std::endl;
 	
 
 }
 
-torch::Tensor CNN::predict_test(torch::Tensor input){
+torch::Tensor InferenceEngine::predict_test(torch::Tensor input){
 	// Reshape, maybe already implemented in cpp
 	// Pre-processing input
 	int original_height = input.size(2);
@@ -80,7 +80,7 @@ torch::Tensor CNN::predict_test(torch::Tensor input){
 	return output;
 }
 
-torch::Tensor CNN::predict(torch::Tensor input){
+torch::Tensor InferenceEngine::predict(torch::Tensor input){
 	// Reshape, maybe already implemented in cpp
 	// Pre-processing input
 	int original_height = input.size(2);
@@ -113,7 +113,7 @@ torch::Tensor CNN::predict(torch::Tensor input){
 	return output;
 	//}
 }
-torch::Tensor CNN::predict_mask(torch::Tensor input){
+torch::Tensor InferenceEngine::predict_mask(torch::Tensor input){
 	// Reshape, maybe already implemented in cpp
 	// Pre-processing input
 	int original_height = input.size(2);
@@ -151,11 +151,11 @@ torch::Tensor CNN::predict_mask(torch::Tensor input){
 	//}
 }
 
-void CNN::save_tensor(torch::Tensor tensor_to_be_saved, std::string filename){
+void InferenceEngine::save_tensor(torch::Tensor tensor_to_be_saved, std::string filename){
 	torch::save(tensor_to_be_saved,filename);
 }
 
-//Foam::volScalarField CNN::convertToFoamField(torch::Tensor t,int node){
+//Foam::volScalarField InferenceEngine::convertToFoamField(torch::Tensor t,int node){
 	//auto a = t.accessor<float, 1>();
 	//for(int i=0; i<a.size(0); i++){
 		//for (int j=0; j<a.size(1);j++){
@@ -163,8 +163,8 @@ void CNN::save_tensor(torch::Tensor tensor_to_be_saved, std::string filename){
 		//}
 	//}
 //}
-torch::Tensor CNN::convertToTensor_test(Foam::volVectorField& U0, Foam::volVectorField& U1){
-	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
+torch::Tensor InferenceEngine::convertToTensor_test(Foam::volVectorField& U0, Foam::volVectorField& U1){
+	// Converts U0 and U1 to a torch::Tensor to be served as an input to the InferenceEngine
 	const Foam::Vector<double>& a = U0.internalField()[0];
 	const Foam::Vector<double>& b= U0.internalField()[1];
 	const Foam::Vector<double>& c = U0.internalField()[2];
@@ -246,8 +246,8 @@ torch::Tensor CNN::convertToTensor_test(Foam::volVectorField& U0, Foam::volVecto
 	
 }
 
-torch::Tensor CNN::convertToTensor(Foam::volVectorField& U0, Foam::volVectorField& U1){
-	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
+torch::Tensor InferenceEngine::convertToTensor(Foam::volVectorField& U0, Foam::volVectorField& U1){
+	// Converts U0 and U1 to a torch::Tensor to be served as an input to the InferenceEngine
 
 	torch::Tensor output = torch::zeros({1,4,100,50});
 	//auto ouptut_a = output.accessor<double, 4>();
@@ -275,7 +275,7 @@ torch::Tensor CNN::convertToTensor(Foam::volVectorField& U0, Foam::volVectorFiel
 }
 
 
-void CNN::updateFoamFieldChannelFlow(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
+void InferenceEngine::updateFoamFieldChannelFlow(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
 	int it = 0;
 	auto t_a = t.accessor<float,4>();
 	forAll(nut0.mesh().C(), celli){
@@ -287,8 +287,8 @@ void CNN::updateFoamFieldChannelFlow(torch::Tensor &t, Foam::volScalarField &nut
 	}
 }
 
-torch::Tensor CNN::convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVectorField& U1){
-	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
+torch::Tensor InferenceEngine::convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVectorField& U1){
+	// Converts U0 and U1 to a torch::Tensor to be served as an input to the InferenceEngine
 
 	//Number of cells definitions
 	//Step height
@@ -343,8 +343,8 @@ torch::Tensor CNN::convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVector
 	return output;
 }
 
-torch::Tensor CNN::convertToTensor_bfs_mask(Foam::volVectorField& U0, Foam::volVectorField& U1){
-	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
+torch::Tensor InferenceEngine::convertToTensor_bfs_mask(Foam::volVectorField& U0, Foam::volVectorField& U1){
+	// Converts U0 and U1 to a torch::Tensor to be served as an input to the InferenceEngine
 
 	//Number of cells definitions
 	//Step height
@@ -402,7 +402,7 @@ torch::Tensor CNN::convertToTensor_bfs_mask(Foam::volVectorField& U0, Foam::volV
 }
 
 
-torch::Tensor CNN::define_mask(int mask_pixel_height, int mask_pixel_width, float step_height, float domain_height, float step_width, float domain_width){
+torch::Tensor InferenceEngine::define_mask(int mask_pixel_height, int mask_pixel_width, float step_height, float domain_height, float step_width, float domain_width){
 	torch::Tensor mask = torch::ones({1,1,mask_pixel_height, mask_pixel_width});
 	int separationindexx = std::floor(step_width/domain_width*mask_pixel_width);
 	int separationindexy = std::floor(step_height/domain_height*mask_pixel_height);
@@ -416,7 +416,7 @@ torch::Tensor CNN::define_mask(int mask_pixel_height, int mask_pixel_width, floa
 	return mask;
 }
 
-void CNN::updateFoamFieldChannelFlow_bfs(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
+void InferenceEngine::updateFoamFieldChannelFlow_bfs(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
 	int it = 0;
 	//Number of cells definitions
 	//Step height
@@ -458,7 +458,7 @@ void CNN::updateFoamFieldChannelFlow_bfs(torch::Tensor &t, Foam::volScalarField 
 	}
 }
 
-Foam::volScalarField CNN::convertToFoamField(const torch::Tensor &t, const std::string& field_name, const Foam::Time& runTime, const Foam::fvMesh& mesh, int uqNode){
+Foam::volScalarField InferenceEngine::convertToFoamField(const torch::Tensor &t, const std::string& field_name, const Foam::Time& runTime, const Foam::fvMesh& mesh, int uqNode){
 	Foam::volScalarField field
 		(
 		 IOobject
@@ -482,7 +482,7 @@ Foam::volScalarField CNN::convertToFoamField(const torch::Tensor &t, const std::
 	return field;
 }
 
-void CNN::printFoamField(const Foam::volVectorField& vectorField){
+void InferenceEngine::printFoamField(const Foam::volVectorField& vectorField){
 	forAll(vectorField.mesh().C(), celli){
 		std::cout << vectorField.name() << " Data : ";
 		std::cout << vectorField.mesh().C()[celli].x() << ", " << vectorField.mesh().C()[celli].y() << ", " << vectorField.mesh().C()[celli].z();
@@ -492,7 +492,7 @@ void CNN::printFoamField(const Foam::volVectorField& vectorField){
 	std::cout << std::endl;
 }
 
-void CNN::printFoamField(const Foam::volScalarField& scalarField){
+void InferenceEngine::printFoamField(const Foam::volScalarField& scalarField){
 	forAll(scalarField.mesh().C(), celli){
 		std::cout << scalarField.name() << " Data : ";
 		std::cout << scalarField.mesh().C()[celli].x() << ", " << scalarField.mesh().C()[celli].y() << ", " << scalarField.mesh().C()[celli].z();
@@ -503,7 +503,7 @@ void CNN::printFoamField(const Foam::volScalarField& scalarField){
 }
 
 
-torch::Tensor CNN::resizeToNetworkSize(const torch::Tensor &input){
+torch::Tensor InferenceEngine::resizeToNetworkSize(const torch::Tensor &input){
 	if (input.size(2)==256 && input.size(3)==128){
 		std::cout << "No resizeToNetworkSize Performed" << std::endl;
 		return input;
@@ -519,7 +519,7 @@ torch::Tensor CNN::resizeToNetworkSize(const torch::Tensor &input){
 	}
 }
 
-torch::Tensor CNN::resizeToOriginal(const torch::Tensor &input, std::vector<int64_t> field_dim){
+torch::Tensor InferenceEngine::resizeToOriginal(const torch::Tensor &input, std::vector<int64_t> field_dim){
 	if (input.size(2)==field_dim[0] && input.size(3)==field_dim[1]){
 		std::cout << "No resizeToOriginal Performed" << std::endl;
 		return input;
@@ -535,7 +535,7 @@ torch::Tensor CNN::resizeToOriginal(const torch::Tensor &input, std::vector<int6
 	}
 }
 
-torch::Tensor CNN::gaussian_smoothing(torch::Tensor input, int kernel_size, float sigma){
+torch::Tensor InferenceEngine::gaussian_smoothing(torch::Tensor input, int kernel_size, float sigma){
 	torch::Tensor xcord = torch::arange(kernel_size);
 	torch::Tensor x_grid = xcord.repeat(kernel_size).view({kernel_size, kernel_size});
 	torch::Tensor y_grid = x_grid.t();
@@ -556,7 +556,7 @@ torch::Tensor CNN::gaussian_smoothing(torch::Tensor input, int kernel_size, floa
 	return torch::ones({1,1});
 }
 
-torch::Tensor CNN::under_relaxation(torch::Tensor old, torch::Tensor prediction, float alpha){
+torch::Tensor InferenceEngine::under_relaxation(torch::Tensor old, torch::Tensor prediction, float alpha){
 	if (old.sizes() == prediction.sizes()){
 		torch::Tensor used = old + alpha * (prediction - old);
 		std::cout << "Under-relaxation of factor " << alpha << std::endl;
@@ -568,7 +568,7 @@ torch::Tensor CNN::under_relaxation(torch::Tensor old, torch::Tensor prediction,
 	}
 }
 
-torch::Tensor CNN::under_relaxation(float alpha){
+torch::Tensor InferenceEngine::under_relaxation(float alpha){
 	if(alpha==1.0){
 		std::cout << "Note: alpha = 1, no under relaxation preformed" << std::endl;
 		return current_nut;
@@ -585,7 +585,7 @@ torch::Tensor CNN::under_relaxation(float alpha){
 }
 
 
-float CNN::get_max_rate_of_change(){
+float InferenceEngine::get_max_rate_of_change(){
 	//torch::Tensor max_nut0_old = torch::max(torch::max(torch::squeeze(this->old_nut).index({0,Slice(None),Slice(None)})));
 	//torch::Tensor max_nut1_old = torch::max(torch::max(torch::squeeze(this->old_nut).index({1,Slice(None),Slice(None)})));
 	//torch::Tensor max_nut0_current = torch::max(torch::max(torch::squeeze(this->current_nut).index({0,Slice(None),Slice(None)})));
@@ -602,7 +602,7 @@ float CNN::get_max_rate_of_change(){
 
 }
 
-torch::Tensor CNN::set_wall_to_zero(const torch::Tensor &input){
+torch::Tensor InferenceEngine::set_wall_to_zero(const torch::Tensor &input){
 	torch::Tensor output = input;
 	//auto output_a = output.accessor<float, 2>();
 	for(int j = 0;j<output.sizes()[3];j++){
@@ -612,7 +612,7 @@ torch::Tensor CNN::set_wall_to_zero(const torch::Tensor &input){
 	return output;
 }
 
-void CNN::printFoamFieldNodes(const Foam::volVectorField& vectorField){
+void InferenceEngine::printFoamFieldNodes(const Foam::volVectorField& vectorField){
 	std::cout << "Printing Node data of Field" << std::endl;
 	const Foam::labelListList& points = vectorField.mesh().cellPoints();
 	forAll(points, celli){
@@ -643,12 +643,12 @@ void CNN::printFoamFieldNodes(const Foam::volVectorField& vectorField){
 	std::cout << std::endl;
 }
 
-void CNN::printFoamFieldNodes(const Foam::volScalarField& scalarField){
+void InferenceEngine::printFoamFieldNodes(const Foam::volScalarField& scalarField){
 	std::cout << "Support for scalarFields is to be implemented" << std::endl;
 	std::cout << std::endl;
 }
 
-void CNN::printInletNodes(const Foam::volScalarField& scalarField){
+void InferenceEngine::printInletNodes(const Foam::volScalarField& scalarField){
 	std::cout << "Printing Inlet nodes" << std::endl;
 	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
 	// std::cout << patchID << endl;
@@ -660,7 +660,7 @@ void CNN::printInletNodes(const Foam::volScalarField& scalarField){
 	std::cout << std::endl;
 }
 
-void CNN::printInletNodesBis(const Foam::volScalarField& scalarField){
+void InferenceEngine::printInletNodesBis(const Foam::volScalarField& scalarField){
 	std::cout << "Printing Inlet nodes" << std::endl;
 	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
 	auto points_ = scalarField.mesh().points();
@@ -683,7 +683,7 @@ void CNN::printInletNodesBis(const Foam::volScalarField& scalarField){
 	std::cout << std::endl;
 }
 
-torch::Tensor CNN::loadTensorFromContainer(const std::string container_filepath, const std::string key){
+torch::Tensor InferenceEngine::loadTensorFromContainer(const std::string container_filepath, const std::string key){
 	std::cout << "Note : to load Tensors from the Pytorch Python API, they need to be saved under a container with corresponding dictionnary keys. See sample code to save Pytorch Python Tensors as .pt containers."<< std::endl;
 	std::cout << "Loading Container located : " << container_filepath << std::endl;
 	std::cout << "Loading Key from Container located : " << key << std::endl;
@@ -693,7 +693,7 @@ torch::Tensor CNN::loadTensorFromContainer(const std::string container_filepath,
 	return loaded_tens;
 }
 
-void CNN::updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorField& U0, Foam::volVectorField& U1){
+void InferenceEngine::updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorField& U0, Foam::volVectorField& U1){
 	int it = 0;
 	auto t_a = t.accessor<float,4>();
 	forAll(U0.mesh().C(), celli){
@@ -707,7 +707,7 @@ void CNN::updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorF
 		it++;
 	}
 }
-//void CNN::set_inlet_nut(Foam::volScalarField& field, float value){
+//void InferenceEngine::set_inlet_nut(Foam::volScalarField& field, float value){
 //	Foam::label patchID = field.mesh().boundaryMesh().findPatchID("inlet");
 //	const fvPatch& boundaryPatch = field.mesh().boundary()[patchID];
 //
@@ -717,7 +717,7 @@ void CNN::updateFoamFieldChannelFlow_velocity(torch::Tensor& t, Foam::volVectorF
 //	}
 //}
 
-void CNN::set_inlet_nut(Foam::volVectorField& field, float value){
+void InferenceEngine::set_inlet_nut(Foam::volVectorField& field, float value){
 	Foam::label patchID = field.mesh().boundaryMesh().findPatchID("inlet");
 	const fvPatch& boundaryPatch = field.mesh().boundary()[patchID];
 
@@ -727,7 +727,7 @@ void CNN::set_inlet_nut(Foam::volVectorField& field, float value){
 	}
 }
 
-void CNN::set_inlet_nut(Foam::volScalarField& field, float value){
+void InferenceEngine::set_inlet_nut(Foam::volScalarField& field, float value){
 	label patchI = field.mesh().boundaryMesh().findPatchID("inlet");
 	std::cout << "found \"inlet\" patch ID : "<< patchI << std::endl;
 

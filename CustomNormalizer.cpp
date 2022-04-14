@@ -1,16 +1,16 @@
-#include "Custom_normalizer.h"
+#include "CustomNormalizer.h"
 //#include <ATen/Functions.h>
 //#include <torch/serialize/input-archive.h>
 //#include <typeinfo>
 
 using json = nlohmann::json;
 
-Custom_normalizer::Custom_normalizer(){
+CustomNormalizer::CustomNormalizer(){
 	//this->mean = 0;
 	//this->std = 0;
 }
 
-Custom_normalizer::Custom_normalizer(std::string json_filepath, bool deserialize_bool){
+CustomNormalizer::CustomNormalizer(std::string json_filepath, bool deserialize_bool){
 	//this->mean = 0;
 	//this->std = 0;
 	this->load_filepath = json_filepath;
@@ -25,7 +25,7 @@ Custom_normalizer::Custom_normalizer(std::string json_filepath, bool deserialize
 	}
 }
 
-void Custom_normalizer::serialize(std::string json_target_filepath){
+void CustomNormalizer::serialize(std::string json_target_filepath){
 	std::cout << "Serializing Custom normalizer : " << json_target_filepath << std::endl;
 	json j;
 	//j["mean"] = this->mean;
@@ -36,7 +36,7 @@ void Custom_normalizer::serialize(std::string json_target_filepath){
 
 }
 
-void Custom_normalizer::deserialize(std::string json_filepath){
+void CustomNormalizer::deserialize(std::string json_filepath){
 	std::cout << "deserialize : " << json_filepath << std::endl;
 	std::ifstream json_filestream(json_filepath/*, std::ifstream::binary*/);
 	json_filestream >> json_object;
@@ -57,7 +57,7 @@ void Custom_normalizer::deserialize(std::string json_filepath){
 	}
 }
 
-torch::Tensor Custom_normalizer::transform(torch::Tensor input){
+torch::Tensor CustomNormalizer::transform(torch::Tensor input){
 	if(!this->initialized){
 		std::cout << "Unable to perform transform, normalizer not initialized, returning input" << std::endl;
 		return input;
@@ -72,7 +72,7 @@ torch::Tensor Custom_normalizer::transform(torch::Tensor input){
 	}
 }
 
-torch::Tensor Custom_normalizer::inverse_transform(torch::Tensor input){
+torch::Tensor CustomNormalizer::inverse_transform(torch::Tensor input){
 	if(!this->initialized){
 		std::cout << "Unable to perform inverse transform, normalizer not initialized, returning inptu" << std::endl;
 		return input;
