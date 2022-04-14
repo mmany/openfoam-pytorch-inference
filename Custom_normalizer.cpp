@@ -28,15 +28,15 @@ Custom_normalizer::Custom_normalizer(std::string json_filepath, bool deserialize
 void Custom_normalizer::serialize(std::string json_target_filepath){
 	std::cout << "Serializing Custom normalizer : " << json_target_filepath << std::endl;
 	json j;
-	j["mean"] = this->mean;
-	j["std"] = this->std;
+	//j["mean"] = this->mean;
+	//j["std"] = this->std;
 	std::ofstream f(json_target_filepath);
 	f << j.dump(4);
 	f.close();
 
 }
 
-void Custom_normalizer::deserialize(std::string json_filepath, bool updateMeanStd){
+void Custom_normalizer::deserialize(std::string json_filepath){
 	std::cout << "deserialize : " << json_filepath << std::endl;
 	std::ifstream json_filestream(json_filepath/*, std::ifstream::binary*/);
 	json_filestream >> json_object;
@@ -45,13 +45,13 @@ void Custom_normalizer::deserialize(std::string json_filepath, bool updateMeanSt
 	std::cout << "Found Keys : " << std::endl;
 	for (auto it: this->json_object.items()){
 		std::cout << it.key() << " , " << it.value() << std::endl;
-		if(updateMeanStd){
-			if(it.key() == "mean"){
-				this->mean[3] = it.value();
-			} else if(it.key() == "std"){
-				this->std[3] = it.value();
-			}
-		}
+		//if(updateMeanStd){
+		//	if(it.key() == "mean"){
+		//		this->mean[3] = it.value();
+		//	} else if(it.key() == "std"){
+		//		this->std[3] = it.value();
+		//	}
+		//}
 		//std::cout << "Type of it.value() : "  << typeid(it.value()).name() << std::endl;
 		//does not return the expected output
 	}

@@ -5,6 +5,7 @@
 #include "torch/nn/modules/conv.h"
 #include "vectorField.H"
 #include "volFieldsFwd.H"
+#include <cmath>
 //#include "UList.H"
 //#include <iostream>
 //#include "volFieldsFwd.H"
@@ -79,7 +80,7 @@ torch::Tensor CNN::predict_test(torch::Tensor input){
 	return output;
 }
 
-torch::Tensor CNN::predict(torch::Tensor input, float alpha){
+torch::Tensor CNN::predict(torch::Tensor input){
 	// Reshape, maybe already implemented in cpp
 	// Pre-processing input
 	int original_height = input.size(2);
@@ -89,6 +90,44 @@ torch::Tensor CNN::predict(torch::Tensor input, float alpha){
 	//std::cout << "shape of resized_input : " << resized_input.sizes() << std::endl;
 	torch::Tensor normalized_input = this->input_normalizer.transform(resized_input);
 	//std::cout << "shape of normalized_input : " << normalized_input.sizes() << std::endl;
+	
+	
+
+	// Conversion Tensor to vector <IValue> for inference
+	std::vector<c10::IValue> input_vector;
+	input_vector.push_back(normalized_input);
+
+	// Inference
+	torch::Tensor normalized_output = this->module.forward(input_vector).toTensor();
+	//std::cout << "shape of normalized_output : " << normalized_output.sizes() << std::endl;
+
+	// Post-processing
+	torch::Tensor standard_output = this->output_normalizer.inverse_transform(normalized_output);
+	//standard_output = this->set_wall_to_zero(standard_output);
+	//std::cout << "shape of standard_output : " << standard_output.sizes() << std::endl;
+	torch::Tensor output = this->resizeToOriginal(standard_output, std::vector<int64_t> ({original_height, original_width}));
+	//std::cout << "shape of output : " << output.sizes() << std::endl;
+	this->old_nut = this->current_nut;
+	this->current_nut = output;
+	
+	return output;
+	//}
+}
+torch::Tensor CNN::predict_mask(torch::Tensor input){
+	// Reshape, maybe already implemented in cpp
+	// Pre-processing input
+	int original_height = input.size(2);
+	int original_width = input.size(3);
+	//std::cout << "shape of input : " << input.sizes() << std::endl;
+	torch::Tensor resized_input = this->resizeToNetworkSize(input);
+	//std::cout << "shape of resized_input : " << resized_input.sizes() << std::endl;
+	torch::Tensor normalized_input = this->input_normalizer.transform(resized_input);
+	//std::cout << "shape of normalized_input : " << normalized_input.sizes() << std::endl;
+	
+	//Adding mask
+	torch::Tensor mask = this->define_mask(normalized_input.size(2),normalized_input.size(3),1.0,3.0,2.0,17.0);
+	normalized_input = torch::cat({normalized_input, mask}, 1);
+	
 
 	// Conversion Tensor to vector <IValue> for inference
 	std::vector<c10::IValue> input_vector;
@@ -108,11 +147,6 @@ torch::Tensor CNN::predict(torch::Tensor input, float alpha){
 	this->current_nut = output;
 	
 	//Performing under relaxation 
-	//if (alpha < 1.0 && alpha > 0){
-		//return this->under_relaxation(this->old_nut, this->current_nut, alpha); 
-	//} else if(alpha == 0){
-		//return this->old_nut;
-	//} else {
 	return output;
 	//}
 }
@@ -307,6 +341,79 @@ torch::Tensor CNN::convertToTensor_bfs(Foam::volVectorField& U0, Foam::volVector
 		it++;
 	}
 	return output;
+}
+
+torch::Tensor CNN::convertToTensor_bfs_mask(Foam::volVectorField& U0, Foam::volVectorField& U1){
+	// Converts U0 and U1 to a torch::Tensor to be served as an input to the CNN
+
+	//Number of cells definitions
+	//Step height
+	int nsh=33;
+	//domain height-step height
+	int nh=67;
+	//Step length
+	int nsl=6;
+	// domain length - step length
+	int nl=44;
+
+	int height_disc=100;
+	int width_disc=50;
+
+	torch::Tensor output = torch::zeros({1,5,height_disc,width_disc});
+	int it = 0;
+	forAll(U0.mesh().C(), celli){
+		if(it<nsl*nh){
+			int i = it / nsl;
+			int j = it % nsl;
+			output[0][0][nsh+i][j] = U0[celli].x(); 
+			output[0][1][nsh+i][j] = U0[celli].z(); 
+			output[0][2][nsh+i][j] = U1[celli].x(); 
+			output[0][3][nsh+i][j] = U1[celli].z(); 
+		}
+		else if (it<(nsl*nh+nsh*nsl)){
+			int i = (it-nh*nsl) / nsl;
+			int j = (it-nh*nsl) % nsl;
+			output[0][0][i][j] = U0[celli].x(); 
+			output[0][1][i][j] = U0[celli].z(); 
+			output[0][2][i][j] = U1[celli].x(); 
+			output[0][3][i][j] = U1[celli].z(); 
+		}
+		else if (it<(nsl*nh+nsh*nsl+nh*nl)){
+			int i = (it-(nh*nsl+nsh*nsl)) / nl;
+			int j = (it-(nh*nsl+nsh*nsl)) % nl;
+			output[0][0][i+nsh][j+nsl] = U0[celli].x(); 
+			output[0][1][i+nsh][j+nsl] = U0[celli].z(); 
+			output[0][2][i+nsh][j+nsl] = U1[celli].x(); 
+			output[0][3][i+nsh][j+nsl] = U1[celli].z(); 
+		}
+		else if (it<(nsl*nh+nsh*nsl+nh*nl+nsh*nl)){
+			int i = (it-(nh*nsl+nsh*nsl+nh*nl)) / nl;
+			int j = (it-(nh*nsl+nsh*nsl+nh*nl)) % nl;
+			output[0][0][i][j+nsl] = U0[celli].x(); 
+			output[0][1][i][j+nsl] = U0[celli].z(); 
+			output[0][2][i][j+nsl] = U1[celli].x(); 
+			output[0][3][i][j+nsl] = U1[celli].z(); 
+		}
+		it++;
+	}
+	torch::Tensor mask = this->define_mask(height_disc,width_disc,1.0,3.0,2.0,17.0);
+	output.index_put_({ 0, 4, torch::indexing::Slice(), torch::indexing::Slice() }, mask);
+	return output;
+}
+
+
+torch::Tensor CNN::define_mask(int mask_pixel_height, int mask_pixel_width, float step_height, float domain_height, float step_width, float domain_width){
+	torch::Tensor mask = torch::ones({1,1,mask_pixel_height, mask_pixel_width});
+	int separationindexx = std::floor(step_width/domain_width*mask_pixel_width);
+	int separationindexy = std::floor(step_height/domain_height*mask_pixel_height);
+	for (int i=0; i<mask_pixel_height; ++i){
+		for (int j=0; j<mask_pixel_width; ++j){
+			if (i<= separationindexy && j<=separationindexx){
+				mask[0][0][i][j] = 0;
+			}
+		}
+	}
+	return mask;
 }
 
 void CNN::updateFoamFieldChannelFlow_bfs(torch::Tensor &t, Foam::volScalarField &nut0, Foam::volScalarField &nut1){
