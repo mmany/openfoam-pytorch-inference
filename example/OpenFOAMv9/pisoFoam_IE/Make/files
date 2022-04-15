@@ -1,0 +1,5 @@
+InferenceEngine/src/InferenceEngine.C
+InferenceEngine/src/CustomNormalizer.C
+pisoFoam_IE.C
+
+EXE = pisoFoam_IE
