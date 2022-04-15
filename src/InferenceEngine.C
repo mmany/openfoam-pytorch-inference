@@ -648,40 +648,41 @@ void InferenceEngine::printFoamFieldNodes(const Foam::volScalarField& scalarFiel
 	std::cout << std::endl;
 }
 
-void InferenceEngine::printInletNodes(const Foam::volScalarField& scalarField){
-	std::cout << "Printing Inlet nodes" << std::endl;
-	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
-	// std::cout << patchID << endl;
-	// auto boundary = scalarField.mesh().boundaryMesh()["inlet"];
-	auto face_centres_boundary = scalarField.mesh().Cf().boundaryField()[patchID];
-	forAll(face_centres_boundary, facei){
-		// std::cout << "value: " << face_centres_boundary[facei] << ", x:"<< face_centres_boundary[facei].x() << ", y:"<< face_centres_boundary[facei].y() <<", z:"<< face_centres_boundary[facei].z() << std::endl;
-	}
-	std::cout << std::endl;
-}
-
-void InferenceEngine::printInletNodesBis(const Foam::volScalarField& scalarField){
-	std::cout << "Printing Inlet nodes" << std::endl;
-	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
-	auto points_ = scalarField.mesh().points();
-
-	forAll (scalarField.mesh().boundary()[patchID],facei) 
-	{
-		const label& faceID = scalarField.mesh().boundaryMesh()[patchID].start() + facei;
-		forAll (scalarField.mesh().faces()[faceID], nodei)
-		{
-			const label& nodeID = scalarField.mesh().faces()[faceID][nodei];
-			std::cout << points_[nodeID].X << std::endl;
-		}
-	}
-	// std::cout << patchID << endl;
-	// auto boundary = scalarField.mesh().boundaryMesh()["inlet"];
-	auto face_centres_boundary = scalarField.mesh().Cf().boundaryField()[patchID];
-	forAll(face_centres_boundary, facei){
-		// std::cout << "value: " << face_centres_boundary[facei] << ", x:"<< face_centres_boundary[facei].x() << ", y:"<< face_centres_boundary[facei].y() <<", z:"<< face_centres_boundary[facei].z() << std::endl;
-	}
-	std::cout << std::endl;
-}
+// Following functions printInletNodes() and printInletNodesBis() are obsolete in OpenFOAMv9, some functions have been deleted
+//void InferenceEngine::printInletNodes(const Foam::volScalarField& scalarField){
+//	std::cout << "Printing Inlet nodes" << std::endl;
+//	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
+//	// std::cout << patchID << endl;
+//	// auto boundary = scalarField.mesh().boundaryMesh()["inlet"];
+//	auto face_centres_boundary = scalarField.mesh().Cf().boundaryField()[patchID];
+//	forAll(face_centres_boundary, facei){
+//		// std::cout << "value: " << face_centres_boundary[facei] << ", x:"<< face_centres_boundary[facei].x() << ", y:"<< face_centres_boundary[facei].y() <<", z:"<< face_centres_boundary[facei].z() << std::endl;
+//	}
+//	std::cout << std::endl;
+//}
+//
+//void InferenceEngine::printInletNodesBis(const Foam::volScalarField& scalarField){
+//	std::cout << "Printing Inlet nodes" << std::endl;
+//	Foam::label patchID = scalarField.mesh().boundaryMesh().findPatchID("inlet");
+//	auto points_ = scalarField.mesh().points();
+//
+//	forAll (scalarField.mesh().boundary()[patchID],facei) 
+//	{
+//		const label& faceID = scalarField.mesh().boundaryMesh()[patchID].start() + facei;
+//		forAll (scalarField.mesh().faces()[faceID], nodei)
+//		{
+//			const label& nodeID = scalarField.mesh().faces()[faceID][nodei];
+//			std::cout << points_[nodeID].X << std::endl;
+//		}
+//	}
+//	// std::cout << patchID << endl;
+//	// auto boundary = scalarField.mesh().boundaryMesh()["inlet"];
+//	auto face_centres_boundary = scalarField.mesh().Cf().boundaryField()[patchID];
+//	forAll(face_centres_boundary, facei){
+//		// std::cout << "value: " << face_centres_boundary[facei] << ", x:"<< face_centres_boundary[facei].x() << ", y:"<< face_centres_boundary[facei].y() <<", z:"<< face_centres_boundary[facei].z() << std::endl;
+//	}
+//	std::cout << std::endl;
+//}
 
 torch::Tensor InferenceEngine::loadTensorFromContainer(const std::string container_filepath, const std::string key){
 	std::cout << "Note : to load Tensors from the Pytorch Python API, they need to be saved under a container with corresponding dictionnary keys. See sample code to save Pytorch Python Tensors as .pt containers."<< std::endl;

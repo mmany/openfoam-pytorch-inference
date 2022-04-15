@@ -215,8 +215,10 @@ class InferenceEngine {
 		void printFoamField(const Foam::volScalarField& scalarField);
 		void printFoamFieldNodes(const Foam::volVectorField& vectorField);
 		void printFoamFieldNodes(const Foam::volScalarField& scalarField);
- 		void printInletNodes(const Foam::volScalarField& scalarField); // For testing
-		void printInletNodesBis(const Foam::volScalarField& scalarField);
+
+		// Following functions are obsolete in OpenFOAMv9, some functions have been deleted
+ 		//void printInletNodes(const Foam::volScalarField& scalarField); // For testing
+		//void printInletNodesBis(const Foam::volScalarField& scalarField);
 
 		// Loading tensor in a file
 		/** Allows to load a tensor stored in a container (similar to a dictionnary) stored using Torchscript. This explains the process well, https://shuye.dev/kb/AI-engineering/LibTorch 
