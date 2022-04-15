@@ -34,7 +34,7 @@ Description
 
 \*---------------------------------------------------------------------------*/
 
-#include "InferenceEngine/InferenceEngine.h"
+#include "InferenceEngine.h"
 
 // Preprocessor directive to avoid including "fvCFD.H" multiple times, the latter being used to compile the InferenceEngine class
 #ifndef OPENFOAM_DEPENDENCY

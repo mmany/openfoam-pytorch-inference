@@ -1,7 +1,7 @@
 EXE_INC = \
     -I$(TORCH_PATH)/include \
     -I$(TORCH_PATH)/include/torch/csrc/api/include \
-    -IInferenceEngine \
+    -IInferenceEngine/include \
     -I$(JSON_PATH)/include \
     -I$(LIB_SRC)/TurbulenceModels/turbulenceModels/lnInclude \
     -I$(LIB_SRC)/TurbulenceModels/incompressible/lnInclude \
