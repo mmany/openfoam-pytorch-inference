@@ -54,7 +54,7 @@ class InferenceEngine {
 		InferenceEngine(std::string model_path, std::string input_normalizer_path, std::string output_normalizer_path);
 		/** Default destructor of the InferenceEngine class
         	*/
-		~InferenceEngine();
+		//~InferenceEngine();
 
 
 		// Member functions
